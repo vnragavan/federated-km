@@ -1,6 +1,6 @@
-# Kaplan-Meier Survival Analysis with Federated Learning
+#  Federated Kaplan-Meier Survival Analysis 
 
-This project simulates federated learning for Kaplan-Meier survival analysis using a dataset. 
+This project simulates federated settings for Kaplan-Meier survival analysis using a dataset. 
 The server aggregates survival estimates from multiple clients, computes the Kaplan-Meier curve, 
 and saves it as a plot. The survival data is also saved in a CSV file.
 The centralized version of KM is also presented for the comparison reasons. 
@@ -14,21 +14,21 @@ To get started with this project, follow these steps to install the required dep
    ```bash
    git clone https://github.com/yourusername/kaplan-meier-federated-learning.git
    cd kaplan-meier-federated-learning 
-2. **Setup a virtual environment on POSIX (optional but recommended)
+2. **Setup a virtual environment on POSIX (optional but recommended)**:
 
    ```bash
    python3 -m venv venv
    source venv/bin/activate
 
-3. **Install the required dependencies using requirements.txt
+3. **Install the required dependencies using requirements.txt**:
    
   ```bash
    pip install -r requirements.txt
 ```
 
-4. **Ensure the dataset (synthetic_data.csv) is ready in the root directory of the project 
+4. **Ensure the dataset (synthetic_data.csv) is ready in the root directory of the project**: 
 
-5. **Run the centralized versaion KM.py
+5. **Run the centralized versaion KM.py**:
    ```bash
      python centralized_km.py
    ```
@@ -37,7 +37,7 @@ To get started with this project, follow these steps to install the required dep
    - plot the Kaplan-Meier survival curve
    - Save the plot as kaplan_meier.png and the survival function data as km_survival_data.csv
   
-6. **Run the federated_simulation for Kaplan-Meier survival analysis
+6. **Run the federated_simulation for Kaplan-Meier survival analysis**:
     ```bash
      python start_simulation.py
    ```
