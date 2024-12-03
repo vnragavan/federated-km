@@ -25,7 +25,9 @@ To get started with this project, follow these steps to install the required dep
   ```bash
    pip install -r requirements.txt
 ```
-4. **Install the official Python wrapper for OpenFHE by following the instructions at https://github.com/openfheorg/openfhe-python
+4. **Install the Python wrapper for OpenFHE** 
+   
+   Follow the instructions at https://github.com/openfheorg/openfhe-python
 
 5. **Ensure the dataset (synthetic_data.csv) is ready in the root directory of the project**: 
 
