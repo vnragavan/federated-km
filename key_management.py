@@ -68,7 +68,8 @@ class KeyManagement:
         self.keys = keys
 
 if __name__ == '__main__':
-     batchSize=16
+     #for testing
+     batchSize = 16
      print("test key generation")
      key_test = KeyManagement()
      key_test.generate_keys(5)

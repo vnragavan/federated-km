@@ -75,7 +75,6 @@ class KMClientHE:
     def partial_decrypt(self, cipher_text, lead):
         if (lead == True):
             return self.crypto_context.MultipartyDecryptLead([cipher_text], self.key.secretKey)
-        x = self.crypto_context.MultipartyDecryptMain([cipher_text], self.key.secretKey)
         return self.crypto_context.MultipartyDecryptMain([cipher_text], self.key.secretKey)
     
     def split_and_encrypt(self, values):

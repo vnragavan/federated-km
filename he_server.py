@@ -123,8 +123,6 @@ class KMServerHE:
 
         aggregated_event_counts = np.zeros(len(self.global_timescale))
         aggregated_at_risk_counts = np.zeros(len(self.global_timescale))
-        ciphertext_holder_event_counts = []
-        ciphertext_holder_at_risk_counts = []
         ciphersum_event_counts = None
         ciphersum_at_risk_counts = None
 
@@ -139,14 +137,8 @@ class KMServerHE:
                 ciphersum_event_counts = self.add_ciphertexts(ciphersum_event_counts, event_counts)
                 ciphersum_at_risk_counts = self.add_ciphertexts(ciphersum_at_risk_counts, at_risk_counts)
 
-            #ciphertext_holder_event_counts.append(event_counts)
-            #ciphertext_holder_at_risk_counts.append(at_risk_counts)
-            #aggregated_event_counts += np.array(event_counts)
-            #aggregated_at_risk_counts += np.array(at_risk_counts)
         aggregated_event_counts_complex = np.array(self.decryption_round(ciphersum_event_counts),dtype=complex) 
         aggregated_at_risk_counts_complex  = np.array(self.decryption_round(ciphersum_at_risk_counts),dtype=complex) 
-        #aggregated_event_counts = np.array(aggregated_event_counts_complex,dtype=complex)
-        #aggregated_at_risk_counts = np.array(aggregated_at_risk_counts_complex,dtype=complex)
         aggregated_event_counts = aggregated_event_counts_complex.real
         aggregated_at_risk_counts = aggregated_at_risk_counts_complex.real
         survival_probabilities = self._compute_survival_probabilities(
