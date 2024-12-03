@@ -35,7 +35,7 @@ class KMServerHE:
             Saves the Kaplan-Meier curve as an image file.
     """
 
-    def __init__(self, num_clients, clients):
+    def __init__(self, num_clients, clients, batch_size):
         """
         Initializes the server with the number of clients.
 
@@ -45,6 +45,7 @@ class KMServerHE:
         self.num_clients = num_clients
         self.clients = clients
         self.global_timescale = None
+        self.batch_size = batch_size
 
     def generate_crypto_context(self):
         k_m = KeyManagement()
@@ -79,15 +80,28 @@ class KMServerHE:
         self.global_timescale = sorted(set(all_time_points))
         return self.global_timescale
     
-    def decryption_round(self, ciphertext_holder):
+    def decryption_round(self, ciphertexts):
         #
         decrypted = []
-        aggregated_result = []
+        aggregated = []
+        for ciphertext in ciphertexts:
+            lead = True
+            partial_decrypts = []
+            for client in self.clients:
+                partial_decrypt = client.partial_decrypt(ciphertext, lead)
+                partial_decrypts.append(partial_decrypt[0])
+                lead = False
+            decrypted = self.crypto_context.MultipartyDecryptFusion(partial_decrypts)
+            decrypted.SetLength(self.batch_size)
+            decrypted = decrypted.GetCKKSPackedValue()
+            aggregated = aggregated + decrypted
+        return aggregated
 
-    def add_ciphertexts(self, ciphertext_holder):
-        size = len(ciphertext_holder[0])
-        #ciphertextAdd12 = cc.EvalAdd(ciphertext1, ciphertext2)
-        #ciphertextAdd123 = cc.EvalAdd(ciphertextAdd12, ciphertext3)  
+    def add_ciphertexts(self, ciphertext1, ciphertext2):
+        ciphertextAdd = []
+        for i in range(len(ciphertext1)):
+            ciphertextAdd.append(self.crypto_context.EvalAdd(ciphertext1[i], ciphertext2[i]))
+        return ciphertextAdd
 
     def aggregate_round_2_HE(self):
         """
@@ -111,19 +125,30 @@ class KMServerHE:
         aggregated_at_risk_counts = np.zeros(len(self.global_timescale))
         ciphertext_holder_event_counts = []
         ciphertext_holder_at_risk_counts = []
+        ciphersum_event_counts = None
+        ciphersum_at_risk_counts = None
 
         for client in self.clients:
             event_counts, at_risk_counts = client.compute_kaplan_meier(
                 self.global_timescale
             )
-            ciphertext_holder_event_counts.append(event_counts)
-            ciphertext_holder_at_risk_counts.append(at_risk_counts)
+            if (ciphersum_event_counts == None):
+                ciphersum_event_counts = event_counts
+                ciphersum_at_risk_counts = at_risk_counts
+            else:
+                ciphersum_event_counts = self.add_ciphertexts(ciphersum_event_counts, event_counts)
+                ciphersum_at_risk_counts = self.add_ciphertexts(ciphersum_at_risk_counts, at_risk_counts)
+
+            #ciphertext_holder_event_counts.append(event_counts)
+            #ciphertext_holder_at_risk_counts.append(at_risk_counts)
             #aggregated_event_counts += np.array(event_counts)
             #aggregated_at_risk_counts += np.array(at_risk_counts)
-        aggregated_cipher_event_counts = self.add_ciphertexts(ciphertext_holder_event_counts)
-        aggregated_cipher_at_risk_counts = self.add_ciphertexts(ciphertext_holder_at_risk_counts)
-        aggregated_event_counts = self.decryption_round(aggregated_cipher_event_counts) 
-        aggregated_at_risk_counts = self.decryption_round(aggregated_cipher_at_risk_counts) 
+        aggregated_event_counts_complex = np.array(self.decryption_round(ciphersum_event_counts),dtype=complex) 
+        aggregated_at_risk_counts_complex  = np.array(self.decryption_round(ciphersum_at_risk_counts),dtype=complex) 
+        #aggregated_event_counts = np.array(aggregated_event_counts_complex,dtype=complex)
+        #aggregated_at_risk_counts = np.array(aggregated_at_risk_counts_complex,dtype=complex)
+        aggregated_event_counts = aggregated_event_counts_complex.real
+        aggregated_at_risk_counts = aggregated_at_risk_counts_complex.real
         survival_probabilities = self._compute_survival_probabilities(
             aggregated_event_counts, aggregated_at_risk_counts
         )

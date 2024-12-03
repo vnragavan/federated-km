@@ -25,10 +25,11 @@ To get started with this project, follow these steps to install the required dep
   ```bash
    pip install -r requirements.txt
 ```
+4. **Install the official Python wrapper for OpenFHE by following the instructions at https://github.com/openfheorg/openfhe-python
 
-4. **Ensure the dataset (synthetic_data.csv) is ready in the root directory of the project**: 
+5. **Ensure the dataset (synthetic_data.csv) is ready in the root directory of the project**: 
 
-5. **Run the centralized versaion KM.py**:
+6. **Run the centralized versaion KM.py**:
    ```bash
      python centralized_km.py
    ```
@@ -37,7 +38,7 @@ To get started with this project, follow these steps to install the required dep
    - plot the Kaplan-Meier survival curve
    - Save the plot as kaplan_meier.png and the survival function data as km_survival_data.csv
   
-6. **Run the federated_simulation for Kaplan-Meier survival analysis**:
+7. **Run the federated_simulation for Kaplan-Meier survival analysis**:
     ```bash
      python start_simulation.py
    ```
@@ -47,5 +48,7 @@ To get started with this project, follow these steps to install the required dep
    - Compute the global Kaplan-Meier curve for each configuration of varying number of clients 2, 5, 10, 20, 30, 40 and 50
    - Save the Kaplan-Meier plot as kaplan_meier_curve_{num_clients}_clients.png.
    - Show and save the computational time plot
+
+
 
      

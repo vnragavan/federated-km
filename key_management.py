@@ -49,6 +49,7 @@ class KeyManagement:
         print(f"n = {self.crypto_context.GetCyclotomicOrder()/2}")
         print(f"lo2 q = {log2(self.crypto_context.GetModulus())}")
 
+    #for testing
     def generate_keys(self, num_keys: int): #n: int, mult_depth: int, dir = ""
         """ 
         Generates n secret keys, a common public key and common evaluation keys.

@@ -12,6 +12,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from client import KMClient  # Import KMClient class
 from server import KMServer  # Import KMServer class
+from he_client import KMClientHE  # Import HEKMClient class
+from he_server import KMServerHE  # Import KMServer class
 
 
 def simulate_federated_learning(dataset_path, num_clients):
@@ -53,6 +55,54 @@ def simulate_federated_learning(dataset_path, num_clients):
     end_time = time.time()  # Stop the timer
     elapsed_time = end_time - start_time  # Calculate elapsed time
     return elapsed_time
+
+def simulate_federated_learning_HE(dataset_path, num_clients):
+    """
+    Simulates the federated learning process for Kaplan-Meier survival analysis.
+    This function splits the dataset into client subsets, performs two rounds of
+    federated learning (aggregating time points and event counts), and calculates
+    the computational time taken for the entire simulation.
+
+    Parameters:
+        dataset_path (str): Path to the dataset CSV file.
+        num_clients (int): The number of clients in the federated learning setup.
+
+    Returns:
+        float: The time taken for the federated learning simulation (in seconds).
+    """
+    start_time = time.time()  # Start the timer
+
+    # Load the centralized dataset
+    data = pd.read_csv(dataset_path, delimiter=";")
+
+    # Split data into client datasets
+    splits = uniform_split(data, num_clients)
+
+    # max batch size of messages to be packed in encoding
+    batch_size = 16
+
+    # Initialize clients
+    clients = []
+    for i in range(num_clients):
+        clients.append(KMClientHE(i, splits[i], batch_size))
+
+    # Initialize server
+    server = KMServerHE(num_clients, clients, batch_size)
+
+    #Key generation
+    server.generate_crypto_context()
+    server.generate_keys()
+
+    # Round 1: Aggregate time points from all clients
+    server.aggregate_round_1()
+
+    # Round 2: Aggregate event and at-risk counts and compute global Kaplan-Meier curve
+    server.aggregate_round_2_HE()
+
+    end_time = time.time()  # Stop the timer
+    elapsed_time = end_time - start_time  # Calculate elapsed time
+    return elapsed_time
+
 
 
 def uniform_split(data, num_clients):
@@ -96,9 +146,12 @@ def run_experiments(dataset_path, client_counts, num_runs=1):
 
         # Collect computation times for multiple runs
         times = []
+        times_he = []
         for _ in range(num_runs):
+            time_taken_he = simulate_federated_learning_HE(dataset_path, num_clients)
             time_taken = simulate_federated_learning(dataset_path, num_clients)
             times.append(time_taken)
+            times_he.append(time_taken_he)
 
         # Calculate mean for the times
         mean_time = np.mean(times)

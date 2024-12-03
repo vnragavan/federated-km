@@ -35,7 +35,7 @@ class KMClientHE:
             based on the client's data.
     """
 
-    def __init__(self, client_id, data_split):
+    def __init__(self, client_id, data_split, batch_size):
         """
         Initializes the client with its ID and dataset split.
 
@@ -47,6 +47,7 @@ class KMClientHE:
             ValueError: If required columns 'vit_stat_int' or 'vit_stat' are 
             missing from the dataset.
         """
+        self.batch_size = batch_size
         self.client_id = client_id
         self.dataset = data_split
         self.global_timescale = None
@@ -71,17 +72,18 @@ class KMClientHE:
         """
         return self.dataset["vit_stat_int"].unique().tolist()
     
-    def partial_decrypt(self, cipher_text, lead = True):
+    def partial_decrypt(self, cipher_text, lead):
         if (lead == True):
             return self.crypto_context.MultipartyDecryptLead([cipher_text], self.key.secretKey)
+        x = self.crypto_context.MultipartyDecryptMain([cipher_text], self.key.secretKey)
         return self.crypto_context.MultipartyDecryptMain([cipher_text], self.key.secretKey)
     
     def split_and_encrypt(self, values):
-        #CKKSPackedEncoding<lbcrypto::ILDCRTParams<bigintdyn::ubint<long unsigned int> > >(): The number of slots cannot be smaller than value vector size,
-        # after testing max number is 16
-        chunk_size = 16
+        #values-list is splitted into n chunks, max size of a chunk is batch size, batch_size = 16 for this simulation 
+        #This is done due to the limitations imposed by OpenFHE. If the chunk size exceeds 16, an exception with the following message is raised:
+        #"CKKSPackedEncoding<lbcrypto::ILDCRTParams<bigintdyn::ubint<long unsigned int> > >(): The number of slots cannot be smaller than value vector size
         ciphertexts = []
-        chunks = [values[i:i + chunk_size] for i in range(0, len(values), chunk_size)]
+        chunks = [values[i:i + self.batch_size] for i in range(0, len(values), self.batch_size)]
         for chunk in chunks:
              plaintext = self.crypto_context.MakeCKKSPackedPlaintext(chunk)
              ciphertexts.append (self.crypto_context.Encrypt(self.public_key, plaintext))
