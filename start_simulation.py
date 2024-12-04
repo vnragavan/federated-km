@@ -94,6 +94,7 @@ def simulate_federated_learning_HE(dataset_path, num_clients):
     server.generate_keys()
 
     # Round 1: Aggregate time points from all clients
+    # no he here
     server.aggregate_round_1()
 
     # Round 2: Aggregate event and at-risk counts and compute global Kaplan-Meier curve
@@ -140,6 +141,7 @@ def run_experiments(dataset_path, client_counts, num_runs=1):
         list: List of mean computation times for each client count.
     """
     mean_times = []
+    mean_times_he = []
 
     for num_clients in client_counts:
         print(f"\n=== Running experiment with {num_clients} clients ===")
@@ -156,10 +158,13 @@ def run_experiments(dataset_path, client_counts, num_runs=1):
         # Calculate mean for the times
         mean_time = np.mean(times)
         mean_times.append(mean_time)
+        mean_time_he = np.mean(times_he)
+        mean_times_he.append(mean_time_he)
 
         print(f"Time taken for {num_clients} clients (mean): {mean_time:.2f} seconds")
+        print(f"Time taken for {num_clients} clients (mean) with he: {mean_time_he:.2f} seconds")
 
-    return mean_times
+    return mean_times, mean_times_he
 
 
 def plot_computation_times(
@@ -199,7 +204,8 @@ if __name__ == "__main__":
     client_counts = [2, 5, 10, 20, 30, 40, 50]  # List of client counts
 
     # Run the experiments and collect the computation times
-    mean_times = run_experiments(dataset_path, client_counts, num_runs=1)
+    mean_times, mean_times_he = run_experiments(dataset_path, client_counts, num_runs=1)
 
     # Save the computation times graph
     plot_computation_times(client_counts, mean_times, save_path="computation_times.png")
+    plot_computation_times(client_counts, mean_times_he, save_path="computation_times_he.png")
