@@ -183,7 +183,7 @@ class KMServerHE:
         output_dir = "results"
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(
-            output_dir, f"kaplan_meier_curve_{self.num_clients}_clients.png"
+            output_dir, f"kaplan_meier_curve_{self.num_clients}_clients_he.png"
         )
 
         plt.figure(figsize=(10, 6))
