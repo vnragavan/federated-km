@@ -14,9 +14,11 @@ from client import KMClient  # Import KMClient class
 from server import KMServer  # Import KMServer class
 from he_client import KMClientHE  # Import HEKMClient class
 from he_server import KMServerHE  # Import KMServer class
+from centralized_km import preprocess_data
+from centralized_km import plot_kaplan_meier_curve
+from lifelines.statistics import logrank_test
 
-
-def simulate_federated_learning(dataset_path, num_clients):
+def simulate_federated_learning(dataset_path, num_clients, data_source):
     """
     Simulates the federated learning process for Kaplan-Meier survival analysis.
     This function splits the dataset into client subsets, performs two rounds of
@@ -44,19 +46,19 @@ def simulate_federated_learning(dataset_path, num_clients):
         clients.append(KMClient(i, splits[i]))
 
     # Initialize server
-    server = KMServer(num_clients)
+    server = KMServer(num_clients,data_source)
 
     # Round 1: Aggregate time points from all clients
     server.aggregate_round_1(clients)
 
     # Round 2: Aggregate event and at-risk counts and compute global Kaplan-Meier curve
-    server.aggregate_round_2(clients)
+    survival_probabilities = server.aggregate_round_2(clients)
 
     end_time = time.time()  # Stop the timer
     elapsed_time = end_time - start_time  # Calculate elapsed time
-    return elapsed_time
+    return elapsed_time, survival_probabilities, server.global_timescale
 
-def simulate_federated_learning_HE(dataset_path, num_clients):
+def simulate_federated_learning_HE(dataset_path, num_clients, data_source):
     """
     Simulates the federated learning process for Kaplan-Meier survival analysis.
     This function splits the dataset into client subsets, performs two rounds of
@@ -87,7 +89,7 @@ def simulate_federated_learning_HE(dataset_path, num_clients):
         clients.append(KMClientHE(i, splits[i], batch_size))
 
     # Initialize server
-    server = KMServerHE(num_clients, clients, batch_size)
+    server = KMServerHE(num_clients, clients, batch_size, data_source)
 
     #Key generation
     server.generate_crypto_context()
@@ -98,11 +100,11 @@ def simulate_federated_learning_HE(dataset_path, num_clients):
     server.aggregate_round_1()
 
     # Round 2: Aggregate event and at-risk counts and compute global Kaplan-Meier curve
-    server.aggregate_round_2_HE()
+    survival_probabilities = server.aggregate_round_2_HE()
 
     end_time = time.time()  # Stop the timer
     elapsed_time = end_time - start_time  # Calculate elapsed time
-    return elapsed_time
+    return elapsed_time, survival_probabilities, server.global_timescale
 
 
 
@@ -126,7 +128,7 @@ def uniform_split(data, num_clients):
     return np.array_split(shuffled_data, num_clients)
 
 
-def run_experiments(dataset_path, client_counts, num_runs=1):
+def run_experiments(dataset_path, data_source, client_counts, num_runs=1):
     """
     Runs experiments for different client counts and collects the computational
     times for each client count. The simulation is repeated `num_runs` times
@@ -140,8 +142,16 @@ def run_experiments(dataset_path, client_counts, num_runs=1):
     Returns:
         list: List of mean computation times for each client count.
     """
+    #prepare a benchmark (centralised solution)
+    data = preprocess_data(dataset_path)
+    central_survival_data, central_survival_prob = plot_kaplan_meier_curve(data)
+    central_time = central_survival_prob.index
+    #test = survival_prob.values
+    #
     mean_times = []
     mean_times_he = []
+    all_survival_probabilities_he = [] 
+    all_global_timescale = []
 
     for num_clients in client_counts:
         print(f"\n=== Running experiment with {num_clients} clients ===")
@@ -150,10 +160,11 @@ def run_experiments(dataset_path, client_counts, num_runs=1):
         times = []
         times_he = []
         for _ in range(num_runs):
-            time_taken_he = simulate_federated_learning_HE(dataset_path, num_clients)
-            time_taken = simulate_federated_learning(dataset_path, num_clients)
+            time_taken_he, survival_probabilities_he, global_timescale_he = simulate_federated_learning_HE(dataset_path, num_clients, data_source)
+            time_taken, survival_probabilities, global_timescale = simulate_federated_learning(dataset_path, num_clients, data_source)
             times.append(time_taken)
             times_he.append(time_taken_he)
+            all_survival_probabilities_he.append(survival_probabilities_he)
 
         # Calculate mean for the times
         mean_time = np.mean(times)
@@ -161,9 +172,18 @@ def run_experiments(dataset_path, client_counts, num_runs=1):
         mean_time_he = np.mean(times_he)
         mean_times_he.append(mean_time_he)
 
-        print(f"Time taken for {num_clients} clients (mean): {mean_time:.2f} seconds")
-        print(f"Time taken for {num_clients} clients (mean) with he: {mean_time_he:.2f} seconds")
+        print(f"Time taken for {num_clients} clients (mean) for {data_source}: {mean_time:.2f} seconds")
+        print(f"Time taken for {num_clients} clients (mean) for {data_source} with he: {mean_time_he:.2f} seconds")
 
+     #
+    for survival_probabilities_he in all_survival_probabilities_he: 
+        results = logrank_test(central_survival_prob.index, global_timescale_he, 
+                       event_observed_A=central_survival_prob.values, 
+                       event_observed_B=survival_probabilities_he)
+        # Print the results
+        print("Log-Rank Test Results:")
+        print(f"Test Statistic: {results.test_statistic}")
+        print(f"P-Value: {results.p_value}")
     return mean_times, mean_times_he
 
 
@@ -198,13 +218,23 @@ def plot_computation_times(
 
 if __name__ == "__main__":
     # Path to the dataset
-    dataset_path = "synthetic_data.csv"
+    # In the lung cancer dataset, the “time”-field name was changed to "vit_stat_int";
+    # and the status-field name was changed to "vit_stat" to preserve the compatability with the syntetic dataset thus requiring less changes in the program
+    
+    dataset_path = "ncctg_lung_cancer_data.csv"
+    data_source = "ncctg_lung_cancer_data"
 
     # Varying number of clients for the experiment
     client_counts = [2, 5, 10, 20, 30, 40, 50]  # List of client counts
 
     # Run the experiments and collect the computation times
-    mean_times, mean_times_he = run_experiments(dataset_path, client_counts, num_runs=1)
+    mean_times, mean_times_he = run_experiments(dataset_path, data_source, client_counts, num_runs=1)
+
+    dataset_path = "synthetic_data.csv"
+    data_source = "synthetic_data"
+
+     # Run the experiments and collect the computation times
+    mean_times, mean_times_he = run_experiments(dataset_path, data_source, client_counts, num_runs=1)
 
     # Save the computation times graph
     plot_computation_times(client_counts, mean_times, save_path="computation_times.png")

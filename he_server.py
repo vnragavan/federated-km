@@ -33,9 +33,16 @@ class KMServerHE:
             Computes survival probabilities based on event counts and at-risk counts.
         _save_kaplan_meier_curve(survival_probabilities):
             Saves the Kaplan-Meier curve as an image file.
+        generate_keys : 
+            Runs distributed key generation process
+            sets initial public key equals None
+            send pk to clients in a loop 
+            recieves updated public key, which is then sent to next client
+            final public key equals the public key received from the last client in the loop
+            pls note: secret key shares never leave the clients and are known only to their owners (clients that generated these keys)
     """
 
-    def __init__(self, num_clients, clients, batch_size):
+    def __init__(self, num_clients, clients, batch_size, data_source):
         """
         Initializes the server with the number of clients.
 
@@ -46,6 +53,7 @@ class KMServerHE:
         self.clients = clients
         self.global_timescale = None
         self.batch_size = batch_size
+        self.data_source = data_source
 
     def generate_crypto_context(self):
         k_m = KeyManagement()
@@ -145,6 +153,7 @@ class KMServerHE:
             aggregated_event_counts, aggregated_at_risk_counts
         )
         self._save_kaplan_meier_curve(survival_probabilities)
+        return survival_probabilities 
 
     def _compute_survival_probabilities(self, event_counts, at_risk_counts):
         """
@@ -183,7 +192,7 @@ class KMServerHE:
         output_dir = "results"
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(
-            output_dir, f"kaplan_meier_curve_{self.num_clients}_clients_he.png"
+            output_dir, f"kaplan_meier_curve_{self.data_source}_{self.num_clients}_clients_he.png"
         )
 
         plt.figure(figsize=(10, 6))

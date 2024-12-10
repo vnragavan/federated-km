@@ -33,6 +33,10 @@ class KMClientHE:
         _compute_event_counts_at_risk(kmf, global_timescale):
             Computes event counts and at-risk counts at the global timescale time points
             based on the client's data.
+        generate_keys(crypto_context, public_key = None)
+            computes intermediate public key and its own secret key share
+            intermediate public key is sent to the server for the next itteration (next client)
+            secret key share is kept secretly  
     """
 
     def __init__(self, client_id, data_split, batch_size):

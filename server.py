@@ -34,7 +34,7 @@ class KMServer:
             Saves the Kaplan-Meier curve as an image file.
     """
 
-    def __init__(self, num_clients):
+    def __init__(self, num_clients, data_source):
         """
         Initializes the server with the number of clients.
 
@@ -43,6 +43,7 @@ class KMServer:
         """
         self.num_clients = num_clients
         self.global_timescale = None
+        self.data_source = data_source
 
     def aggregate_round_1(self, clients):
         """
@@ -97,6 +98,7 @@ class KMServer:
             aggregated_event_counts, aggregated_at_risk_counts
         )
         self._save_kaplan_meier_curve(survival_probabilities)
+        return survival_probabilities
 
     def _compute_survival_probabilities(self, event_counts, at_risk_counts):
         """
@@ -135,7 +137,7 @@ class KMServer:
         output_dir = "results"
         os.makedirs(output_dir, exist_ok=True)
         output_path = os.path.join(
-            output_dir, f"kaplan_meier_curve_{self.num_clients}_clients.png"
+            output_dir, f"kaplan_meier_curve_{self.data_source}_{self.num_clients}_clients.png"
         )
 
         plt.figure(figsize=(10, 6))

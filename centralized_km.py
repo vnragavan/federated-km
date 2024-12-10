@@ -125,6 +125,7 @@ def plot_kaplan_meier_curve(data):
     csv_file = "km_survival_data.csv"
     survival_data.to_csv(csv_file, index=False)
     print(f"Kaplan-Meier survival function saved as '{csv_file}'.")
+    return survival_data, survival_prob
 
 
 if __name__ == "__main__":
