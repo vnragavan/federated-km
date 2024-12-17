@@ -78,7 +78,7 @@ def preprocess_data(dataset_path):
     return data
 
 
-def plot_kaplan_meier_curve(data):
+def plot_kaplan_meier_curve(data, datasource):
     """
     Fits a Kaplan-Meier estimator to the dataset and plots the survival curve.
 
@@ -113,16 +113,13 @@ def plot_kaplan_meier_curve(data):
     plt.grid(True)
 
     # Save the plot as a PNG image
-    output_file = "kaplan_meier.png"
+    output_file = f"{datasource}.png"
     plt.savefig(output_file, dpi=300, bbox_inches="tight")
     print(f"Kaplan-Meier plot saved as '{output_file}'.")
-
-    # Show the plot
-    plt.show()
-
+   
     # Save the survival function to a CSV file
     survival_data = kmf.survival_function_
-    csv_file = "km_survival_data.csv"
+    csv_file = f"{datasource}.csv"
     survival_data.to_csv(csv_file, index=False)
     print(f"Kaplan-Meier survival function saved as '{csv_file}'.")
     return survival_data, survival_prob
