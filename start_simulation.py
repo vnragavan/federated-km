@@ -272,7 +272,7 @@ if __name__ == "__main__":
     # In the lung cancer dataset, the “time”-field name was changed to "vit_stat_int";
     # and the status-field name was changed to "vit_stat" to preserve the compatability with the syntetic dataset thus requiring less changes in the program
     
-    dataset_path = "/Users/narasimha/Downloads/federated-km-main/ncctg_lung_cancer_data.csv"
+    dataset_path = "ncctg_lung_cancer_data.csv"
     data_source = "ncctg_lung_cancer_data"
     
      # Inspect and transform the dataset
