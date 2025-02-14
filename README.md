@@ -51,6 +51,16 @@ To get started with this project, follow these steps to install the required dep
    - Save the Kaplan-Meier plot as kaplan_meier_curve_{num_clients}_clients.png.
    - Show and save the computational time plot
 
+8. ***Run the reconstruction attack simulation**:
+ ```bash
+     python3 reconstruction_attack_v1.py 
+   ```
+This will:
+- split the data into no overlap, small overlap (10%), and large overlap (50%)
+- computes the number of individuals at risk and event occurrences over time 
+- uses federated statistics to infer missing data from other providers 
+- computes MAE, RMSE, Rˆ2 and accuracy for attack effectiveness 
+- produces accuracy, RMSE, Rˆ2 graphs across different federated scenarios. 
 
 
      
